@@ -1,5 +1,6 @@
 import { Server } from "socket.io"
 import Redis from "ioredis"
+import { produceMessage } from "./kafka"
 require('dotenv').config()
 
 const redisCred = {
@@ -38,10 +39,13 @@ class SocketService {
             })
         })
 
-        sub.on("message", (channel, message) => {
+        sub.on("message", async (channel, message) => {
             if (channel === messageChannel) {
                 console.log("New message from redis", message)
                 io.emit("message", message)
+            
+                await produceMessage(message)
+                console.log("Message produced to kafka broker")
             }
         })
     }
